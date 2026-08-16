@@ -2,31 +2,26 @@
   "name": "datamind-ai",
   "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
+  "scripts": {"dev":"next dev","build":"next build","start":"next start","lint":"next lint"},
   "dependencies": {
-    "@ai-sdk/openai": "latest",
-    "ai": "latest",
-    "lucide-react": "latest",
-    "next": "14.2.35",
-    "papaparse": "latest",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "recharts": "latest",
-    "zod": "latest"
+    "@ai-sdk/openai":"latest",
+    "ai":"latest",
+    "lucide-react":"latest",
+    "next":"14.2.35",
+    "papaparse":"latest",
+    "react":"18.3.1",
+    "react-dom":"18.3.1",
+    "recharts":"latest",
+    "zod":"latest"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/papaparse": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "typescript": "latest",
-    "tailwindcss": "3.4.17",
-    "postcss": "8.4.49",
-    "autoprefixer": "10.4.20"
+    "@tailwindcss/postcss":"4.3.3",
+    "@types/node":"latest",
+    "@types/papaparse":"latest",
+    "@types/react":"latest",
+    "@types/react-dom":"latest",
+    "postcss":"8.5.6",
+    "tailwindcss":"4.3.3",
+    "typescript":"latest"
   }
 }
