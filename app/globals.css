@@ -1,4 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#070b16;color:#f8fafc;font-family:Inter,ui-sans-serif,system-ui,sans-serif}.grid-bg{background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:40px 40px}.glass{background:rgba(15,23,42,.72);backdrop-filter:blur(18px);border:1px solid rgba(148,163,184,.14)}.gradient-text{background:linear-gradient(90deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
+@import "tailwindcss";
+
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #070b16; color: #f8fafc; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+.grid-bg { background-image: linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px), linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px); background-size: 40px 40px; }
+.glass { background: rgba(15,23,42,.72); backdrop-filter: blur(18px); border: 1px solid rgba(148,163,184,.14); }
+.gradient-text { background: linear-gradient(90deg,#a78bfa,#22d3ee); -webkit-background-clip: text; background-clip: text; color: transparent; }
