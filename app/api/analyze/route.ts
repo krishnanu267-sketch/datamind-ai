@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
 import { z } from 'zod';
-import { generateText } from 'ai';
-import { openai } from '@ai-sdk/openai';
 
 const recordSchema = z.record(z.string(), z.any());
 const schema = z.object({
@@ -24,51 +23,43 @@ export async function POST(req: Request) {
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({
         demo: true,
-        summary: 'Your dataset was profiled successfully, but live AI analysis is not configured for this deployment.',
+        summary: 'Live AI analysis is not configured for this deployment.',
         answer: 'Live AI analysis is not configured for this deployment.',
         insights: [
           `The dataset contains ${body.profile.rows ?? 'multiple'} rows and ${body.profile.columns ?? 'multiple'} columns.`,
           'Review missing values and duplicate rows before modeling.',
           'Use the dashboard to identify trends and outliers.',
         ],
-        recommendations: [
-          'Check data types and categorical consistency.',
-          'Investigate columns with substantial missing values.',
-        ],
+        recommendations: ['Check data types and categorical consistency.', 'Investigate columns with substantial missing values.'],
+        questions: [],
       });
     }
 
-    const prompt = `You are DataMind AI, an expert data analyst. Analyze the supplied dataset profile and sample. Return concise, grounded business insights. Never invent numbers. Respond ONLY as valid JSON with exactly these keys: summary (string), insights (string[]), recommendations (string[]), questions (string[]). Make summary a useful 2-4 sentence executive overview. Profile: ${JSON.stringify(body.profile)} Sample: ${JSON.stringify(body.sample)} User question: ${body.question || 'Give the most useful analysis.'}`;
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const prompt = `You are DataMind AI, an expert data analyst. Analyze this dataset profile and sample. Never invent numbers. Return ONLY valid JSON with keys summary (string), insights (array of strings), recommendations (array of strings), questions (array of strings). Make summary a useful 2-4 sentence executive overview. Profile: ${JSON.stringify(body.profile)} Sample: ${JSON.stringify(body.sample)} User question: ${body.question || 'Give the most useful analysis.'}`;
 
-    const result = await generateText({
-      model: openai(process.env.OPENAI_MODEL || 'gpt-5-mini'),
-      prompt,
+    const response = await client.responses.create({
+      model: process.env.OPENAI_MODEL || 'gpt-5-mini',
+      input: prompt,
     });
+
+    const text = response.output_text?.trim();
+    if (!text) throw new Error('OpenAI returned an empty response.');
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(result.text);
+      parsed = JSON.parse(text);
     } catch {
-      parsed = {
-        summary: result.text,
-        insights: [],
-        recommendations: [],
-        questions: [],
-      };
+      parsed = { summary: text, insights: [], recommendations: [], questions: [] };
     }
 
     const normalized = responseSchema.parse(parsed);
-    const fallbackSummary = normalized.summary || normalized.insights[0] || 'Data analysis completed successfully.';
+    const summary = normalized.summary || normalized.insights[0] || 'Data analysis completed successfully.';
 
-    return NextResponse.json({
-      ...normalized,
-      summary: fallbackSummary,
-      answer: fallbackSummary,
-    });
+    return NextResponse.json({ ...normalized, summary, answer: summary });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'Analysis failed' },
-      { status: 400 },
-    );
+    const message = e instanceof Error ? e.message : 'Analysis failed';
+    console.error('DataMind AI analysis error:', e);
+    return NextResponse.json({ error: message, summary: '', insights: [], recommendations: [], questions: [] }, { status: 500 });
   }
 }
