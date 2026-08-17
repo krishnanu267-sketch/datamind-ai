@@ -35,7 +35,7 @@ function topCategories(rows: Row[], column: string, limit = 8) {
     const key = String(r[column] ?? 'Unknown');
     counts.set(key, (counts.get(key) || 0) + 1);
   }
-  return [...counts.entries()]
+  return Array.from(counts.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit)
     .map(([name, value]) => ({ name: name.length > 20 ? `${name.slice(0, 20)}…` : name, value }));
