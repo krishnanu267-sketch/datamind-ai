@@ -28,6 +28,20 @@ function extractText(content: unknown): string {
   return '';
 }
 
+function cleanJsonText(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.startsWith('```')) {
+    return trimmed
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim();
+  }
+  const start = trimmed.indexOf('{');
+  const end = trimmed.lastIndexOf('}');
+  if (start >= 0 && end > start) return trimmed.slice(start, end + 1);
+  return trimmed;
+}
+
 export async function POST(req: Request) {
   try {
     const body = schema.parse(await req.json());
@@ -47,28 +61,30 @@ export async function POST(req: Request) {
     }
 
     const client = new Mistral({ apiKey });
-    const prompt = `You are DataMind AI, an expert data analyst. Analyze the supplied dataset profile and sample. Never invent numbers. Return ONLY valid JSON with exactly these keys: summary (string), insights (string[]), recommendations (string[]), questions (string[]). Make summary a useful 2-4 sentence executive overview. Profile: ${JSON.stringify(body.profile)} Sample: ${JSON.stringify(body.sample)} User question: ${body.question || 'Give the most useful analysis.'}`;
+    const prompt = `You are DataMind AI, an expert data analyst. Analyze the supplied dataset profile and sample. Never invent numbers. Return ONLY valid JSON with exactly these keys: summary (string), insights (string[]), recommendations (string[]), questions (string[]). Do not wrap the JSON in Markdown code fences. Make summary a useful 2-4 sentence executive overview. Profile: ${JSON.stringify(body.profile)} Sample: ${JSON.stringify(body.sample)} User question: ${body.question || 'Give the most useful analysis.'}`;
 
     const result = await client.chat.complete({
       model: process.env.MISTRAL_MODEL || 'mistral-small-latest',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
+      responseFormat: { type: 'json_object' },
     });
 
-    const text = extractText(result.choices?.[0]?.message?.content);
+    const rawText = extractText(result.choices?.[0]?.message?.content);
+    const text = cleanJsonText(rawText);
     let parsed: unknown;
     try {
       parsed = JSON.parse(text);
     } catch {
-      parsed = { summary: text, insights: [], recommendations: [], questions: [] };
+      parsed = { summary: rawText, insights: [], recommendations: [], questions: [] };
     }
 
     const normalized = responseSchema.parse(parsed);
     const summary = normalized.summary || normalized.insights[0] || 'Data analysis completed successfully.';
-    return NextResponse.json({ ...normalized, summary, answer: summary });
+    return NextResponse.json({ ...normalized, summary, answer: summary, build: 'datamind-analytics-v3' });
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Analysis failed';
     console.error('DataMind AI analysis error:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message, build: 'datamind-analytics-v3' }, { status: 500 });
   }
 }
